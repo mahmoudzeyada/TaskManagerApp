@@ -35,7 +35,7 @@ app.post('/users', (req, res) => {
 });
 
 
-// creating Tasks endpoint
+// Creating Tasks endpoint
 app.post('/tasks', (req, res) => {
   const task = new Task(req.body);
   task.save().then(() => {
@@ -44,6 +44,30 @@ app.post('/tasks', (req, res) => {
     res.status(400).send(err);
   });
 });
+
+// Reading Tasks endpoint
+app.get('/tasks', (req, res) => {
+  Task.find({}).then((tasks) => {
+    res.status(200).send(tasks);
+  }).catch((err) => {
+    res.status(400).send(err);
+  });
+});
+
+// Reading Tasks by id endpoint
+app.get('/tasks/:id', (req, res) => {
+  const _id = req.params.id;
+  Task.findById(_id).then((task) => {
+    if (!task) {
+      res.status(404).send();
+    }
+    res.send(task);
+  }).catch((err) => {
+    res.status(400).send(err);
+  });
+});
+
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
@@ -59,7 +83,6 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-
 
 
 module.exports = app;
