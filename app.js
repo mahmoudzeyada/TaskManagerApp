@@ -1,18 +1,18 @@
-const  createError = require('http-errors');
-const  express = require('express');
-const  path = require('path');
-const  cookieParser = require('cookie-parser');
-const  logger = require('morgan');
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
 
-const  indexRouter = require('./routes/index');
-const  usersRouter = require('./routes/users');
+const indexRouter = require('./routes/index');
+const usersRouter = require('./routes/users');
 
 require('./models/dbConnections');
 const User = require('./models/users');
 const Task = require('./models/tasks');
 
 
-const  app = express();
+const app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -25,25 +25,53 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // creating Users endpoint
-app.post('/users', (req, res) => {
-  const user = new User(req.body);
-  user.save().then(() => {
+app.post('/users', async (req, res) => {
+  try {
+    const user = new User(req.body);
+    await user.save();
     res.status(201).send(user);
-  }).catch((err) => {
-    res.status(400).send(err);
-  });
+  } catch (e) {
+    res.status(400).send(e);
+  }
 });
 
 
-// creating Tasks endpoint
-app.post('/tasks', (req, res) => {
-  const task = new Task(req.body);
-  task.save().then(() => {
+// Creating Tasks endpoint
+app.post('/tasks', async (req, res) => {
+  try {
+    const task = new Task(req.body);
+    await task.save();
     res.status(201).send(task);
-  }).catch((err) => {
-    res.status(400).send(err);
-  });
+  } catch (e) {
+    res.status(400).send(e);
+  }
 });
+
+// Reading Tasks endpoint
+app.get('/tasks', async (req, res) => {
+  try {
+    const tasks = await Task.find({});
+    res.status(200).send(tasks);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+// Reading Tasks by id endpoint
+app.get('/tasks/:id', async (req, res) => {
+  try {
+    const _id = req.params.id;
+    const task = await Task.findById(_id);
+    if (!task) {
+      res.status(404).send();
+    }
+    res.send(task);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
+
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
@@ -59,7 +87,6 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-
 
 
 module.exports = app;

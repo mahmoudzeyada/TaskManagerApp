@@ -41,3 +41,4 @@ local-dev/bundle.js
 
 .vscode
 .eslintrc.json
+playground/
