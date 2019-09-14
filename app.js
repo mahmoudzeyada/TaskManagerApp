@@ -31,7 +31,7 @@ app.post('/users', async (req, res) => {
     await user.save();
     res.status(201).send(user);
   } catch (e) {
-    res.status(400).send(e);
+    res.status(500).send(e);
   }
 });
 
@@ -54,7 +54,7 @@ app.patch('/users/:id', async (req, res) => {
     }
     return res.status(200).send(user);
   } catch (e) {
-    return res.status(400).send(e);
+    return res.status(500).send(e);
   }
 });
 
@@ -79,7 +79,7 @@ app.post('/tasks', async (req, res) => {
     await task.save();
     res.status(201).send(task);
   } catch (e) {
-    res.status(400).send(e);
+    res.status(500).send(e);
   }
 });
 
@@ -89,7 +89,7 @@ app.get('/tasks', async (req, res) => {
     const tasks = await Task.find({});
     res.status(200).send(tasks);
   } catch (e) {
-    res.status(400).send(e);
+    res.status(500).send(e);
   }
 });
 
@@ -103,7 +103,7 @@ app.get('/tasks/:id', async (req, res) => {
     }
     res.send(task);
   } catch (e) {
-    res.status(400).send(e);
+    res.status(500).send(e);
   }
 });
 
@@ -124,7 +124,7 @@ app.patch('/tasks/:id', async (req, res) =>{
     }
     return res.status(200).send(task);
   } catch (e) {
-    return res.status(400).send(e);
+    return res.status(500).send(e);
   }
 });
 
