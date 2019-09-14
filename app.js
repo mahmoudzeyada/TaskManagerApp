@@ -34,6 +34,20 @@ app.post('/users', async (req, res) => {
     res.status(400).send(e);
   }
 });
+// Updating Users endpoint
+app.patch('users/:id', async (req, res) => {
+  try {
+    const _id = req.params.id;
+    const user = await User.findByIdAndUpdate(
+        _id, req.body, {new: true, runValidators: true});
+    if (!user) {
+      res.status(404).send();
+    }
+    res.status(200).send();
+  } catch (e) {
+    res.status(400).send(e);
+  }
+});
 
 
 // Creating Tasks endpoint
