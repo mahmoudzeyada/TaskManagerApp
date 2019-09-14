@@ -9,9 +9,6 @@ const usersRouter = require('./routes/users');
 const tasksRouter = require('./routes/tasks');
 
 require('./models/dbConnections');
-const User = require('./models/users');
-const Task = require('./models/tasks');
-
 
 const app = express();
 

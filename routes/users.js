@@ -1,4 +1,5 @@
 const express = require('express');
+// eslint-disable-next-line new-cap
 const router = express.Router();
 
 const User = require('../models/users');
@@ -24,13 +25,12 @@ router.patch('/users/:id', async (req, res) => {
     if (!isValidUpdates) {
       return res.status(404).send('not valid updates');
     }
-
-    const _id = req.params.id;
-    const user = await User.findByIdAndUpdate(
-        _id, req.body, {new: true, runValidators: true});
+    const user = await User.findById(req.params.id, {});
     if (!user) {
       return res.status(404).send();
     }
+    updates.forEach((update) => user[update] = req.body[update]);
+    await user.save();
     return res.status(200).send(user);
   } catch (e) {
     return res.status(500).send(e);
