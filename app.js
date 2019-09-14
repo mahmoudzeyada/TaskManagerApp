@@ -128,6 +128,19 @@ app.patch('/tasks/:id', async (req, res) =>{
   }
 });
 
+// Deleting Tasks endpoint
+app.delete('/tasks/:id', async (req, res) => {
+  try {
+    const task = await Task.findByIdAndDelete(req.params.id);
+    if (!task) {
+      return res.status(404).send();
+    }
+    return res.status(200).send();
+  } catch (e) {
+    return res.status(500).send(e);
+  };
+});
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
