@@ -20,18 +20,18 @@ router.post('/login', async (req, res, next) => {
 }),
 
 // creating Users endpoint
-router.post('/users', async (req, res) => {
+router.post('/users', async (req, res, next) => {
   try {
     const user = new User(req.body);
     await user.save();
     res.status(201).send(user);
   } catch (e) {
-    res.status(500).send();
+    return next(e);
   }
 });
 
 // Updating Users endpoint
-router.patch('/users/:id', async (req, res) => {
+router.patch('/users/:id', async (req, res, next) => {
   try {
     const updates = Object.keys(req.body);
     const allowedUpdates = ['name', 'password', 'age', 'email'];
@@ -48,12 +48,12 @@ router.patch('/users/:id', async (req, res) => {
     await user.save();
     return res.status(200).send(user);
   } catch (e) {
-    return res.status(500).send();
+    return next(e);
   }
 });
 
 // Deleting Users Account endpoint
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', async (req, res, next) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
@@ -61,7 +61,7 @@ router.delete('/users/:id', async (req, res) => {
     }
     return res.status(200).send();
   } catch (e) {
-    return res.status(500).send();
+    return next(e);
   };
 });
 
