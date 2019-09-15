@@ -13,7 +13,8 @@ router.post('/login', async (req, res, next) => {
       return res.status(404).send('pls provide password and username/email');
     }
     const user = await User.findByCardinalities(payload, password);
-    return res.status(200).send(user);
+    const token = await user.generateAuthTokens();
+    return res.status(200).send({user, token});
   } catch (e) {
     return next(e);
   }
