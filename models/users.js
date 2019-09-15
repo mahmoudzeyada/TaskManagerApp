@@ -9,7 +9,7 @@ const userSchema = new Schema({
     type: String,
     required: true,
     trim: true,
-
+    unique: true,
   },
   age: {
     type: Number,
@@ -26,6 +26,7 @@ const userSchema = new Schema({
     required: true,
     trim: true,
     lowercase: true,
+    unique: true,
     validate(value) {
       if (!validator.isEmail(value)) {
         throw new Error('Email is invalid');
@@ -47,8 +48,28 @@ const userSchema = new Schema({
 
   },
 });
+// Static Function for comparing passwords
+userSchema.statics.findByCardinalities = async (payload, password) => {
+  let user = await User.findOne({name: payload});
+  if (!user) {
+    user = await User.findOne({email: payload});
+    if (!user) {
+      /* this hashing function used to make the time of checking username or
+      email equals to time of hashing and checking password*/
+      await bcrypt.compare(' ', password);
+      throw new Error('unable to login');
+    }
+  }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new Error('unable to login');
+  }
+  return user;
+};
 
+// Middleware for hashing password on every save and update
 userSchema.pre('save', async function() {
+  // eslint-disable-next-line no-invalid-this
   const user = this;
   if (user.isModified('password')) {
     user.password = await bcrypt.hash(user.password, 8);

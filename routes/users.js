@@ -4,6 +4,21 @@ const router = express.Router();
 
 const User = require('../models/users');
 
+// Login endpoint
+router.post('/login', async (req, res, next) => {
+  try {
+    const payload = req.body.payload;
+    const password = req.body.password;
+    if (!(payload && password)) {
+      return res.status(404).send('pls provide password and username/email');
+    }
+    const user = await User.findByCardinalities(payload, password);
+    return res.status(200).send(user);
+  } catch (e) {
+    return next(e);
+  }
+}),
+
 // creating Users endpoint
 router.post('/users', async (req, res) => {
   try {
@@ -11,7 +26,7 @@ router.post('/users', async (req, res) => {
     await user.save();
     res.status(201).send(user);
   } catch (e) {
-    res.status(500).send(e);
+    res.status(500).send();
   }
 });
 
@@ -33,7 +48,7 @@ router.patch('/users/:id', async (req, res) => {
     await user.save();
     return res.status(200).send(user);
   } catch (e) {
-    return res.status(500).send(e);
+    return res.status(500).send();
   }
 });
 
