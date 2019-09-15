@@ -1,5 +1,6 @@
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const mongoose= require('mongoose');
 
 const Schema = mongoose.Schema;
@@ -45,10 +46,26 @@ const userSchema = new Schema({
       },
       message: (props) => `${props.value} it is contains password word`,
     },
-
   },
+  tokens: [{
+    token: {
+      type: String,
+      required: true,
+    },
+  },
+  ],
 });
-// Static Function for comparing passwords
+
+// Method On User Instance For Creating JWT Tokens
+userSchema.methods.generateAuthTokens = async function() {
+  const user = this;
+  const token = jwt.sign({_id: user._id.toString()}, 'thisisasecretKey');
+  user.tokens.concat({token});
+  await user.save();
+  return token;
+};
+
+// Static Method for comparing passwords
 userSchema.statics.findByCardinalities = async (payload, password) => {
   let user = await User.findOne({name: payload});
   if (!user) {
