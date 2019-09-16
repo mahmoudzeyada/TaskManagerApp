@@ -36,6 +36,21 @@ router.post('/logout', auth, async (req, res, next) => {
     next(e);
   }
 });
+
+
+// Logout-all endpoint
+router.post('/logoutall', auth, async (req, res, next) => {
+  try {
+    // removing all authentications token from db
+    req.user.tokens = [];
+    await req.user.save();
+    res.status(200).send();
+  } catch (e) {
+    next(e);
+  }
+});
+
+
 // creating Users endpoint
 router.post('/users', async (req, res, next) => {
   try {
