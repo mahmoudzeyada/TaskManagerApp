@@ -5,15 +5,6 @@ const router = express.Router();
 const User = require('../models/users');
 const auth = require('../middleware/auth');
 
-// Account details endpoint
-router.get('/users/me', auth, async (req, res, next) => {
-  try {
-    res.status(200).send(req.user);
-  } catch (e) {
-    next(e);
-  }
-});
-
 
 // Login endpoint
 router.post('/login', async (req, res, next) => {
@@ -31,6 +22,20 @@ router.post('/login', async (req, res, next) => {
   }
 }),
 
+
+// Logout endpoint
+router.post('/logout', auth, async (req, res, next) => {
+  try {
+    // removing the token for the current session form db
+    req.user.tokens = req.user.tokens.filter((subDoc) => {
+      return subDoc.token !== req.token;
+    });
+    await req.user.save();
+    res.status(200).send();
+  } catch (e) {
+    next(e);
+  }
+});
 // creating Users endpoint
 router.post('/users', async (req, res, next) => {
   try {
@@ -40,6 +45,15 @@ router.post('/users', async (req, res, next) => {
     res.status(201).send({user, token});
   } catch (e) {
     return next(e);
+  }
+});
+
+// Account details endpoint
+router.get('/users/me', auth, async (req, res, next) => {
+  try {
+    res.status(200).send(req.user);
+  } catch (e) {
+    next(e);
   }
 });
 
