@@ -3,6 +3,17 @@ const express = require('express');
 const router = express.Router();
 
 const User = require('../models/users');
+const auth = require('../middleware/auth');
+
+// Account details endpoint
+router.get('/users/me', auth, async (req, res, next) => {
+  try {
+    res.status(200).send(req.user);
+  } catch (e) {
+    next(e);
+  }
+});
+
 
 // Login endpoint
 router.post('/login', async (req, res, next) => {
