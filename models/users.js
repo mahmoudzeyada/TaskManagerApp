@@ -55,6 +55,13 @@ const userSchema = new Schema({
   },
   ],
 });
+
+// Setting virtual attribute for one to many relation ship to tasks
+userSchema.virtual('tasks', {
+  ref: 'Task',
+  localField: '_id',
+  foreignField: 'owner',
+});
 // Method on User for hiding sensitive parameters
 userSchema.methods.toJSON= function() {
   user = this.toObject();
