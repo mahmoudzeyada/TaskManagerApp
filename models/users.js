@@ -55,6 +55,13 @@ const userSchema = new Schema({
   },
   ],
 });
+// Method on User for hiding sensitive parameters
+userSchema.methods.toJSON= function() {
+  user = this.toObject();
+  delete user.password;
+  delete user.tokens;
+  return user;
+};
 
 // Method On User Instance For Creating JWT Tokens
 userSchema.methods.generateAuthTokens = async function() {
