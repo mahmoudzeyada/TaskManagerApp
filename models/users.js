@@ -56,7 +56,7 @@ const userSchema = new Schema({
     },
   },
   ],
-});
+}, {timestamps: true});
 
 // Setting virtual attribute for one to many relation ship to tasks
 userSchema.virtual('tasks', {
