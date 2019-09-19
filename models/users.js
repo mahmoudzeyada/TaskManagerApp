@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose= require('mongoose');
 
+const Task = require('./tasks');
+
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
@@ -105,6 +107,13 @@ userSchema.pre('save', async function() {
   if (user.isModified('password')) {
     user.password = await bcrypt.hash(user.password, 8);
   }
+});
+
+// Middleware for removing all related tasks
+userSchema.pre('remove', async function() {
+  // eslint-disable-next-line no-invalid-this
+  const user = this;
+  await Task.deleteMany({owner: user._id});
 });
 
 
