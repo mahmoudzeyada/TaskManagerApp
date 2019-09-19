@@ -73,7 +73,7 @@ router.get('/users/me', auth, async (req, res, next) => {
 });
 
 // Updating Users endpoint
-router.patch('/users/:id', async (req, res, next) => {
+router.patch('/users/me', auth, async (req, res, next) => {
   try {
     const updates = Object.keys(req.body);
     const allowedUpdates = ['name', 'password', 'age', 'email'];
@@ -82,25 +82,18 @@ router.patch('/users/:id', async (req, res, next) => {
     if (!isValidUpdates) {
       return res.status(404).send('not valid updates');
     }
-    const user = await User.findById(req.params.id, {});
-    if (!user) {
-      return res.status(404).send();
-    }
-    updates.forEach((update) => user[update] = req.body[update]);
-    await user.save();
-    return res.status(200).send(user);
+    updates.forEach((update) => req.user[update] = req.body[update]);
+    await req.user.save();
+    return res.status(200).send(req.user);
   } catch (e) {
     return next(e);
   }
 });
 
 // Deleting Users Account endpoint
-router.delete('/users/:id', async (req, res, next) => {
+router.delete('/users/me', auth, async (req, res, next) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) {
-      return res.status(404).send();
-    }
+    await req.user.remove();
     return res.status(200).send();
   } catch (e) {
     return next(e);
