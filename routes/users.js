@@ -3,20 +3,77 @@ const express = require('express');
 const router = express.Router();
 
 const User = require('../models/users');
+const auth = require('../middleware/auth');
+
+
+// Login endpoint
+router.post('/login', async (req, res, next) => {
+  try {
+    const payload = req.body.payload;
+    const password = req.body.password;
+    if (!(payload && password)) {
+      return res.status(404).send('pls provide password and username/email');
+    }
+    const user = await User.findByCardinalities(payload, password);
+    const token = await user.generateAuthTokens();
+    return res.status(200).send({user, token});
+  } catch (e) {
+    return next(e);
+  }
+}),
+
+
+// Logout endpoint
+router.post('/logout', auth, async (req, res, next) => {
+  try {
+    // removing the token for the current session form db
+    req.user.tokens = req.user.tokens.filter((subDoc) => {
+      return subDoc.token !== req.token;
+    });
+    await req.user.save();
+    res.status(200).send();
+  } catch (e) {
+    next(e);
+  }
+});
+
+
+// Logout-all endpoint
+router.post('/logoutall', auth, async (req, res, next) => {
+  try {
+    // removing all authentications token from db
+    req.user.tokens = [];
+    await req.user.save();
+    res.status(200).send();
+  } catch (e) {
+    next(e);
+  }
+});
+
 
 // creating Users endpoint
-router.post('/users', async (req, res) => {
+router.post('/users', async (req, res, next) => {
   try {
     const user = new User(req.body);
     await user.save();
-    res.status(201).send(user);
+    const token = await user.generateAuthTokens();
+    res.status(201).send({user, token});
   } catch (e) {
-    res.status(500).send(e);
+    return next(e);
+  }
+});
+
+// Account details endpoint
+router.get('/users/me', auth, async (req, res, next) => {
+  try {
+    res.status(200).send(req.user);
+  } catch (e) {
+    next(e);
   }
 });
 
 // Updating Users endpoint
-router.patch('/users/:id', async (req, res) => {
+router.patch('/users/me', auth, async (req, res, next) => {
   try {
     const updates = Object.keys(req.body);
     const allowedUpdates = ['name', 'password', 'age', 'email'];
@@ -25,28 +82,21 @@ router.patch('/users/:id', async (req, res) => {
     if (!isValidUpdates) {
       return res.status(404).send('not valid updates');
     }
-    const user = await User.findById(req.params.id, {});
-    if (!user) {
-      return res.status(404).send();
-    }
-    updates.forEach((update) => user[update] = req.body[update]);
-    await user.save();
-    return res.status(200).send(user);
+    updates.forEach((update) => req.user[update] = req.body[update]);
+    await req.user.save();
+    return res.status(200).send(req.user);
   } catch (e) {
-    return res.status(500).send(e);
+    return next(e);
   }
 });
 
 // Deleting Users Account endpoint
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/me', auth, async (req, res, next) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) {
-      return res.status(404).send();
-    }
+    await req.user.remove();
     return res.status(200).send();
   } catch (e) {
-    return res.status(500).send();
+    return next(e);
   };
 });
 

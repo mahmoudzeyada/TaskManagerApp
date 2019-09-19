@@ -4,11 +4,11 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 
-
-const usersRouter = require('./routes/users');
 const tasksRouter = require('./routes/tasks');
+const usersRouter = require('./routes/users');
 
 require('./models/dbConnections');
+
 
 const app = express();
 
