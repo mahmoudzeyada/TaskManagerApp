@@ -23,7 +23,11 @@ router.post('/tasks', auth, async (req, res, next) => {
 // Reading Tasks endpoint
 router.get('/tasks', auth, async (req, res, next) => {
   try {
-    await req.user.populate('tasks').execPopulate();
+    const match = {};
+    if (req.query.completed) {
+      match.completed = req.query.completed === 'true';
+    }
+    await req.user.populate({path: 'tasks', match}).execPopulate();
     res.status(200).send(req.user.tasks);
   } catch (e) {
     next(e);
