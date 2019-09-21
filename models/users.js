@@ -56,6 +56,10 @@ const userSchema = new Schema({
     },
   },
   ],
+  avatar: {
+    type: Buffer,
+
+  },
 }, {timestamps: true});
 
 // Setting virtual attribute for one to many relation ship to tasks
