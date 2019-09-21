@@ -56,6 +56,10 @@ const userSchema = new Schema({
     },
   },
   ],
+  avatar: {
+    type: Buffer,
+
+  },
 }, {timestamps: true});
 
 // Setting virtual attribute for one to many relation ship to tasks
@@ -69,6 +73,7 @@ userSchema.methods.toJSON= function() {
   user = this.toObject();
   delete user.password;
   delete user.tokens;
+  delete user.avatar;
   return user;
 };
 
