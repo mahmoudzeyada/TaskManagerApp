@@ -136,4 +136,21 @@ router.delete('/users/me/avatar', auth, async (req, res) => {
     return res.status(400).send();
   }
 });
+
+
+// Retrieving users avatar by id
+router.get('/users/:id/avatar', async (req, res) => {
+  try {
+    const _id = req.params.id;
+    const user = await User.findById(_id);
+    if (!user || !user.avatar) {
+      throw new Error();
+    }
+    res.set('Content-type', 'image/jpg');
+    return res.status(200).send(user.avatar);
+  } catch (e) {
+    return res.status(400).send();
+  }
+});
+
 module.exports = router;
