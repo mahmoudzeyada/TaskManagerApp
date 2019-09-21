@@ -101,7 +101,7 @@ router.delete('/users/me', auth, async (req, res, next) => {
   };
 });
 
-// Upload Avatars
+// Configuration for uploading files
 const upload = multer({
   limits: {
     fileSize: 1000000,
@@ -114,6 +114,8 @@ const upload = multer({
   },
 });
 
+
+// Uploading avatar endpoint
 router.post('/users/me/avatar', auth, upload.single('avatar'),
     async (req, res) => {
       req.user.avatar = req.file.buffer;
@@ -123,4 +125,15 @@ router.post('/users/me/avatar', auth, upload.single('avatar'),
       res.status(400).send({error: error.message});
     });
 
+
+// Deleting avatar endpoint
+router.delete('/users/me/avatar', auth, async (req, res) => {
+  try {
+    req.user.avatar = undefined;
+    await req.user.save();
+    return res.status(200).send();
+  } catch (e) {
+    return res.status(400).send();
+  }
+});
 module.exports = router;
