@@ -1,6 +1,7 @@
 const express = require('express');
 // eslint-disable-next-line new-cap
 const router = express.Router();
+const multer = require('multer');
 
 const User = require('../models/users');
 const auth = require('../middleware/auth');
@@ -99,5 +100,27 @@ router.delete('/users/me', auth, async (req, res, next) => {
     return next(e);
   };
 });
+
+// Upload Avatars
+const upload = multer({
+  limits: {
+    fileSize: 1000000,
+  },
+  fileFilter(req, file, cb) {
+    if (file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(undefined, true);
+    }
+    return cb(new Error('the file must be jpg,jpeg or png'));
+  },
+});
+
+router.post('/users/me/avatar', auth, upload.single('avatar'),
+    async (req, res) => {
+      req.user.avatar = req.file.buffer;
+      await req.user.save();
+      res.send();
+    }, (error, req, res, next) => {
+      res.status(400).send({error: error.message});
+    });
 
 module.exports = router;
