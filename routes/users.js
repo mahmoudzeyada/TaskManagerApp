@@ -2,6 +2,7 @@ const express = require('express');
 // eslint-disable-next-line new-cap
 const router = express.Router();
 const multer = require('multer');
+const sharp = require('sharp');
 
 const User = require('../models/users');
 const auth = require('../middleware/auth');
@@ -118,7 +119,9 @@ const upload = multer({
 // Uploading avatar endpoint
 router.post('/users/me/avatar', auth, upload.single('avatar'),
     async (req, res) => {
-      req.user.avatar = req.file.buffer;
+      const buffer = await sharp(req.file.buffer)
+          .resize({width: 250, hight: 250}).png().toBuffer();
+      req.user.avatar = buffer;
       await req.user.save();
       res.send();
     }, (error, req, res, next) => {
@@ -146,7 +149,7 @@ router.get('/users/:id/avatar', async (req, res) => {
     if (!user || !user.avatar) {
       throw new Error();
     }
-    res.set('Content-type', 'image/jpg');
+    res.set('Content-type', 'image/png');
     return res.status(200).send(user.avatar);
   } catch (e) {
     return res.status(400).send();
