@@ -6,7 +6,7 @@ const sharp = require('sharp');
 
 const User = require('../models/users');
 const auth = require('../middleware/auth');
-const {sendWelcomeEmail} = require('../emails/accounts');
+const {sendWelcomeEmail, sendCancellationEmail} = require('../emails/accounts');
 
 
 // Login endpoint
@@ -97,6 +97,7 @@ router.patch('/users/me', auth, async (req, res, next) => {
 // Deleting Users Account endpoint
 router.delete('/users/me', auth, async (req, res, next) => {
   try {
+    sendCancellationEmail(req.user.name, req.user.email);
     await req.user.remove();
     return res.status(200).send();
   } catch (e) {
