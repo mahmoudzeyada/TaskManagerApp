@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "fuser -k 3000/tcp &&nodemon ./bin/www"
+    "dev": "fuser -k 3000/tcp && env-cmd -f ./config/dev.env nodemon ./bin/www"
   },
   "dependencies": {
     "@sendgrid/mail": "^6.4.0",
@@ -24,6 +24,7 @@
     "validator": "^11.1.0"
   },
   "devDependencies": {
+    "env-cmd": "^10.0.1",
     "eslint": "^6.3.0",
     "eslint-config-google": "^0.14.0",
     "nodemon": "^1.19.2"
