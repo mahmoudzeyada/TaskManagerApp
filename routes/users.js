@@ -9,6 +9,7 @@ const asyncMiddleWare = require('../middleware/errorHandling');
 const User = require('../models/users');
 const auth = require('../middleware/auth');
 const {sendWelcomeEmail, sendCancellationEmail} = require('../emails/accounts');
+const {creatingUserSchema} = require('../validators/userValidators');
 
 
 // Login endpoint
@@ -46,7 +47,11 @@ router.post('/logoutall', auth, asyncMiddleWare(async (req, res, next) => {
 
 // Creating Users endpoint
 router.post('/users', asyncMiddleWare(async (req, res) => {
-  const user = new User(req.body);
+  const {error, value} = creatingUserSchema.validate({...req.body});
+  if (error) {
+    throw boom.badRequest(error);
+  }
+  const user = new User(value);
   await user.save();
   const token = await user.generateAuthTokens();
   sendWelcomeEmail(user.name, user.email);
