@@ -4,5 +4,9 @@ const taskUpdateSchema = joi.object({
   description: joi.string(),
   completed: joi.boolean(),
 });
+const taskCreateSchema = joi.object({
+  description: joi.string().required(),
+  completed: joi.boolean(),
+});
 
-module.exports = taskUpdateSchema;
+module.exports = {taskUpdateSchema, taskCreateSchema};

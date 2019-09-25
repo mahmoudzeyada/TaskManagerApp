@@ -6,13 +6,20 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const Task = require('../models/tasks');
 const asyncMiddleWare = require('../middleware/errorHandling');
-const taskUpdateSchema = require('../validators/taskValidators');
+const {
+  taskUpdateSchema,
+  taskCreateSchema,
+} = require('../validators/taskValidators');
 
 
 // Creating Tasks endpoint
 router.post('/tasks', auth, asyncMiddleWare(async (req, res) => {
+  const {error, value} = taskCreateSchema.validate({...req.body});
+  if (error) {
+    throw boom.badRequest(error);
+  }
   const task = new Task({
-    ...req.body,
+    ...value,
     owner: req.user._id,
   });
   await task.save();
@@ -57,7 +64,7 @@ router.patch('/tasks/:id', auth, asyncMiddleWare(async (req, res) => {
   const updates = Object.keys(req.body);
   const {error, value} = taskUpdateSchema.validate({...req.body});
   if (error) {
-    throw boom.badRequest('not valid fields');
+    throw boom.badRequest(error);
   }
   const task = await Task.findOne({_id: req.params.id, owner: req.user.id});
   if (!task) {
