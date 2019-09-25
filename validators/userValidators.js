@@ -30,6 +30,16 @@ const updatingUserSchema = joi.object({
       .email({minDomainSegments: 2}),
 });
 
-module.exports = {creatingUserSchema, updatingUserSchema};
+const resetPasswordSchema = joi.object({
+  oldPassword: joi.string()
+      .pattern(/^[a-zA-Z0-9]{3,30}$/)
+      .required(),
+  newPassword: joi.string()
+      .pattern(/^[a-zA-Z0-9]{3,30}$/)
+      .required(),
+
+});
+
+module.exports = {creatingUserSchema, updatingUserSchema, resetPasswordSchema};
 
 
