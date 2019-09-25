@@ -4,6 +4,7 @@ const router = express.Router();
 const multer = require('multer');
 const sharp = require('sharp');
 const boom = require('@hapi/boom');
+const bcrypt = require('bcryptjs');
 
 const asyncMiddleWare = require('../middleware/errorHandling');
 const User = require('../models/users');
@@ -12,6 +13,7 @@ const {sendWelcomeEmail, sendCancellationEmail} = require('../emails/accounts');
 const {
   creatingUserSchema,
   updatingUserSchema,
+  resetPasswordSchema,
 } = require('../validators/userValidators');
 
 
@@ -129,5 +131,23 @@ router.get('/users/:id/avatar', asyncMiddleWare(async (req, res) => {
   res.set('Content-type', 'image/png');
   return res.status(200).send(user.avatar);
 }));
+
+
+// Reset password endpoint for authenticated users
+router.put('/users/me/reset_password', auth,
+    asyncMiddleWare(async (req, res) => {
+      const {error, value} = resetPasswordSchema.validate({...req.body});
+      if (error) {
+        throw boom.badRequest(error);
+      }
+      const isMatch = await bcrypt.compare(value.oldPassword,
+          req.user.password);
+      if (!isMatch) {
+        throw boom.badRequest('there is not the old password');
+      }
+      req.user.password = value.newPassword;
+      await req.user.save();
+      return res.status(202).send();
+    }));
 
 module.exports = router;
