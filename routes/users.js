@@ -9,7 +9,10 @@ const asyncMiddleWare = require('../middleware/errorHandling');
 const User = require('../models/users');
 const auth = require('../middleware/auth');
 const {sendWelcomeEmail, sendCancellationEmail} = require('../emails/accounts');
-const {creatingUserSchema} = require('../validators/userValidators');
+const {
+  creatingUserSchema,
+  updatingUserSchema,
+} = require('../validators/userValidators');
 
 
 // Login endpoint
@@ -59,30 +62,28 @@ router.post('/users', asyncMiddleWare(async (req, res) => {
 }));
 
 // Account details endpoint
-router.get('/users/me', auth, async (req, res) => {
+router.get('/users/me', auth, asyncMiddleWare(async (req, res) => {
   res.status(200).send(req.user);
-});
+}));
 
 // Updating Users endpoint
-router.patch('/users/me', auth, async (req, res) => {
-  const updates = Object.keys(req.body);
-  const allowedUpdates = ['name', 'password', 'age', 'email'];
-  const isValidUpdates = updates.every(
-      (update) => allowedUpdates.includes(update));
-  if (!isValidUpdates) {
-    throw boom.badRequest('not valid updates');
+router.patch('/users/me', auth, asyncMiddleWare(async (req, res) => {
+  const {error, value} = updatingUserSchema.validate({...req.body});
+  if (error) {
+    throw boom.badRequest(error);
   }
-  updates.forEach((update) => req.user[update] = req.body[update]);
+  const updates = Object.keys(value);
+  updates.forEach((update) => req.user[update] = value[update]);
   await req.user.save();
   return res.status(200).send(req.user);
-});
+}));
 
 // Deleting Users Account endpoint
-router.delete('/users/me', auth, async (req, res) => {
+router.delete('/users/me', auth, asyncMiddleWare(async (req, res) => {
   sendCancellationEmail(req.user.name, req.user.email);
   await req.user.remove();
   return res.status(200).send();
-});
+}));
 
 // Configuration for uploading files
 const upload = multer({
@@ -93,7 +94,7 @@ const upload = multer({
     if (file.originalname.match(/\.(jpg|jpeg|png)$/)) {
       return cb(undefined, true);
     }
-    return cb(new Error('the file must be jpg,jpeg or png'));
+    return cb(boom.badRequest('the file must be jpg,jpeg or png'));
   },
 });
 
@@ -106,21 +107,20 @@ router.post('/users/me/avatar', auth, upload.single('avatar'),
       req.user.avatar = buffer;
       await req.user.save();
       res.send();
-    }, (error, req, res, next) => {
-      res.status(400).send({error: error.message});
-    });
+    }
+);
 
 
 // Deleting avatar endpoint
-router.delete('/users/me/avatar', auth, async (req, res) => {
+router.delete('/users/me/avatar', auth, asyncMiddleWare(async (req, res) => {
   req.user.avatar = undefined;
   await req.user.save();
   return res.status(200).send();
-});
+}));
 
 
 // Retrieving users avatar by id
-router.get('/users/:id/avatar', async (req, res) => {
+router.get('/users/:id/avatar', asyncMiddleWare(async (req, res) => {
   const _id = req.params.id;
   const user = await User.findById(_id);
   if (!user || !user.avatar) {
@@ -128,6 +128,6 @@ router.get('/users/:id/avatar', async (req, res) => {
   }
   res.set('Content-type', 'image/png');
   return res.status(200).send(user.avatar);
-});
+}));
 
 module.exports = router;

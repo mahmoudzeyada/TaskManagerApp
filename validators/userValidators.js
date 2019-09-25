@@ -18,7 +18,18 @@ const creatingUserSchema = joi.object({
       .required(),
 });
 
+const updatingUserSchema = joi.object({
+  name: joi.string()
+      .alphanum()
+      .min(5)
+      .max(30),
+  age: joi.number()
+      .greater(0)
+      .integer(),
+  email: joi.string()
+      .email({minDomainSegments: 2}),
+});
 
-module.exports = {creatingUserSchema};
+module.exports = {creatingUserSchema, updatingUserSchema};
 
 
