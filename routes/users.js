@@ -5,15 +5,24 @@ const multer = require('multer');
 const sharp = require('sharp');
 const boom = require('@hapi/boom');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
+
+const jwtPromise = require('../utils/jwt');
 const asyncMiddleWare = require('../middleware/errorHandling');
 const User = require('../models/users');
 const auth = require('../middleware/auth');
-const {sendWelcomeEmail, sendCancellationEmail} = require('../emails/accounts');
+const {
+  sendWelcomeEmail,
+  sendCancellationEmail,
+  sendResetPasswordEmail,
+} = require('../emails/accounts');
 const {
   creatingUserSchema,
   updatingUserSchema,
   resetPasswordSchema,
+  verifyingEmailSchema,
+  confirmingResetPasswordSchema,
 } = require('../validators/userValidators');
 
 
@@ -148,6 +157,42 @@ router.put('/users/me/reset_password', auth,
       req.user.password = value.newPassword;
       await req.user.save();
       return res.status(202).send();
+    }));
+
+// Forget password endpoint
+router.put('/users/forget_password', asyncMiddleWare(async (req, res) => {
+  const {error, value} = verifyingEmailSchema.validate({...req.body});
+  if (error) {
+    throw boom.badRequest(error);
+  }
+  const user = await User.findOne({email: value.email});
+  if (!user) {
+    throw boom.badRequest('we do not have this email');
+  }
+  const token = jwt.sign({_id: user._id},
+      process.env.JWT_SECRET, {expiresIn: '15m'});
+
+  sendResetPasswordEmail(token, user);
+
+  // eslint-disable-next-line max-len
+  res.status(202).send({'message': 'the email was sent to given email please go to email to confirm'});
+}));
+
+// Forget password confirm updating endpoint
+router.put('/users/forget_password/confirm',
+    asyncMiddleWare(async (req, res) => {
+      const {error, value} =
+        confirmingResetPasswordSchema.validate({...req.body});
+      if (error) {
+        throw boom.badRequest(error);
+      }
+      const decode = await jwtPromise.verify(value.token,
+          process.env.JWT_SECRET);
+      const user = await User.findById(decode._id);
+      user.password = value.password;
+      await user.save();
+      return res.status(200).send(
+          {message: 'the password is updated successfully'});
     }));
 
 module.exports = router;
