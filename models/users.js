@@ -2,6 +2,8 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose= require('mongoose');
+const boom = require('@hapi/boom');
+const beautifyUnique = require('mongoose-beautiful-unique-validation');
 
 const Task = require('./tasks');
 
@@ -12,14 +14,14 @@ const userSchema = new Schema({
     type: String,
     required: true,
     trim: true,
-    unique: true,
+    unique: 'Two users cannot share the same username ({VALUE})',
   },
   age: {
     type: Number,
     default: 0,
     validate(value) {
       if (value < 0) {
-        throw new Error('age must be positive number');
+        throw boom.badRequest('age must be positive number');
       };
     },
 
@@ -29,10 +31,10 @@ const userSchema = new Schema({
     required: true,
     trim: true,
     lowercase: true,
-    unique: true,
+    unique: 'this email :({VALUE}) used before',
     validate(value) {
       if (!validator.isEmail(value)) {
-        throw new Error('Email is invalid');
+        throw boom.badRequest('Email is invalid');
       };
     },
   },
@@ -61,6 +63,10 @@ const userSchema = new Schema({
 
   },
 }, {timestamps: true});
+
+
+// Enable beautifying on this schema
+userSchema.plugin(beautifyUnique);
 
 // Setting virtual attribute for one to many relation ship to tasks
 userSchema.virtual('tasks', {
@@ -95,12 +101,12 @@ userSchema.statics.findByCardinalities = async (payload, password) => {
       /* this hashing function used to make the time of checking username or
       email equals to time of hashing and checking password*/
       await bcrypt.compare(' ', password);
-      throw new Error('unable to login');
+      throw boom.badRequest('unable to login');
     }
   }
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new Error('unable to login');
+    throw boom.badRequest('unable to login');
   }
   return user;
 };
@@ -120,6 +126,22 @@ userSchema.pre('remove', async function() {
   const user = this;
   await Task.deleteMany({owner: user._id});
 });
+
+// Middleware for handling Key Deduplicate error
+const handleE11000 = function(err, res, next) {
+  console.log(err);
+  if (err.errors.name && err.errors.name.kind == 'unique') {
+    throw boom.badRequest(err.errors.name.message);
+  } else if (err.errors.email && err.errors.email.kind == 'unique') {
+    throw boom.badRequest(err.errors.email.message);
+  }
+  next();
+};
+
+userSchema.post('save', handleE11000);
+userSchema.post('update', handleE11000);
+userSchema.post('findOneAndUpdate', handleE11000);
+userSchema.post('insertMany', handleE11000);
 
 
 const User = mongoose.model('User', userSchema);
