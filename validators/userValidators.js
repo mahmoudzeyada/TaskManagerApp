@@ -40,6 +40,26 @@ const resetPasswordSchema = joi.object({
 
 });
 
-module.exports = {creatingUserSchema, updatingUserSchema, resetPasswordSchema};
+const verifyingEmailSchema = joi.object({
+  email: joi.string()
+      .email({minDomainSegments: 2})
+      .required(),
+});
+
+const confirmingResetPasswordSchema = joi.object({
+  password: joi.string()
+      .pattern(/^[a-zA-Z0-9]{3,30}$/)
+      .required(),
+  token: joi.string()
+      .required(),
+});
+
+module.exports = {
+  creatingUserSchema,
+  updatingUserSchema,
+  resetPasswordSchema,
+  verifyingEmailSchema,
+  confirmingResetPasswordSchema,
+};
 
 
