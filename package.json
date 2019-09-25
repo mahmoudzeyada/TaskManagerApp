@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "fuser -k 3000/tcp && env-cmd -f ./config/dev.env nodemon ./bin/www"
+    "dev": "fuser -k 3000/tcp || env-cmd -f ./config/dev.env nodemon ./bin/www"
   },
   "dependencies": {
     "@hapi/boom": "^7.4.10",
