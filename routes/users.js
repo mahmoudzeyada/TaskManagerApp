@@ -188,9 +188,10 @@ router.put('/users/forget_password/confirm',
         throw boom.badRequest(error);
       }
       const userId = await PasswordChange.findByToken(value.token);
-      await User.findByIdAndUpdate(userId, {$set: {password: value.password}});
+      await User.findByIdAndUpdate(userId,
+          {$set: {password: value.password, tokens: []}});
       return res.status(200).send(
-          {message: 'the password is updated successfully'});
+          {message: 'the password is updated successfully pls login again'});
     }));
 
 module.exports = router;
