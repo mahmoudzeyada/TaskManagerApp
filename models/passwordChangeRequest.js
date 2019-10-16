@@ -1,6 +1,9 @@
 /* eslint-disable no-invalid-this */
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const boom = require('@hapi/boom');
+
+const timeDifference = require('../utils/timeDifference');
 
 const Schema = mongoose.Schema;
 
@@ -32,6 +35,14 @@ passwordChangeSchema.statics.findByToken = async function(token) {
   token = crypto.createHash('sha256')
       .update(token).digest('base64');
   const entry = await PasswordChange.findOne({token: token});
+  if (!entry || entry.visited) {
+    throw boom.badRequest('token provided is not correct or expired');
+  };
+  const isGt15 = timeDifference(entry.createdAt);
+  if (!isGt15) {
+    throw boom.badRequest('token provided is not correct or expired');
+  };
+  entry.visited = true;
   return entry.owner;
 };
 
