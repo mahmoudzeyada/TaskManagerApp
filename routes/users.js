@@ -5,12 +5,11 @@ const multer = require('multer');
 const sharp = require('sharp');
 const boom = require('@hapi/boom');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 
 
-const jwtPromise = require('../utils/jwt');
 const asyncMiddleWare = require('../middleware/errorHandling');
 const User = require('../models/users');
+const PasswordChange = require('../models/passwordChangeRequest');
 const auth = require('../middleware/auth');
 const {
   sendWelcomeEmail,
@@ -167,15 +166,17 @@ router.put('/users/forget_password', asyncMiddleWare(async (req, res) => {
   }
   const user = await User.findOne({email: value.email});
   if (!user) {
-    throw boom.badRequest('we do not have this email');
-  }
-  const token = jwt.sign({_id: user._id},
-      process.env.JWT_SECRET, {expiresIn: '15m'});
-
+    // eslint-disable-next-line max-len
+    return res.status(202).send({'message': 'the email was sent to given email please go to email to confirm'});
+  };
+  const token = PasswordChange.generateTokens();
+  await PasswordChange.create({
+    owner: user._id,
+    token: token,
+  });
   sendResetPasswordEmail(token, user);
-
   // eslint-disable-next-line max-len
-  res.status(202).send({'message': 'the email was sent to given email please go to email to confirm'});
+  return res.status(202).send({'message': 'the email was sent to given email please go to email to confirm'});
 }));
 
 // Forget password confirm updating endpoint
@@ -186,11 +187,8 @@ router.put('/users/forget_password/confirm',
       if (error) {
         throw boom.badRequest(error);
       }
-      const decode = await jwtPromise.verify(value.token,
-          process.env.JWT_SECRET);
-      const user = await User.findById(decode._id);
-      user.password = value.password;
-      await user.save();
+      const userId = await PasswordChange.findByToken(value.token);
+      await User.findByIdAndUpdate(userId, {$set: {password: value.password}});
       return res.status(200).send(
           {message: 'the password is updated successfully'});
     }));
