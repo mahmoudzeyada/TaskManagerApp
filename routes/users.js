@@ -5,7 +5,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const boom = require('@hapi/boom');
 const bcrypt = require('bcryptjs');
-
+const limiter = require('../config/ratelimiter-config');
 
 const asyncMiddleWare = require('../middleware/errorHandling');
 const User = require('../models/users');
@@ -159,7 +159,7 @@ router.put('/users/me/reset_password', auth,
     }));
 
 // Forget password endpoint
-router.put('/users/forget_password', asyncMiddleWare(async (req, res) => {
+router.put('/users/forget_password', limiter, asyncMiddleWare(async (req, res) => {
   const {error, value} = verifyingEmailSchema.validate({...req.body});
   if (error) {
     throw boom.badRequest(error);
