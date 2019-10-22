@@ -4,14 +4,24 @@ const router = express.Router();
 const multer = require('multer');
 const sharp = require('sharp');
 const boom = require('@hapi/boom');
+const bcrypt = require('bcryptjs');
+const limiter = require('../config/ratelimiter-config');
 
 const asyncMiddleWare = require('../middleware/errorHandling');
 const User = require('../models/users');
+const PasswordChange = require('../models/passwordChangeRequest');
 const auth = require('../middleware/auth');
-const {sendWelcomeEmail, sendCancellationEmail} = require('../emails/accounts');
+const {
+  sendWelcomeEmail,
+  sendCancellationEmail,
+  sendResetPasswordEmail,
+} = require('../emails/accounts');
 const {
   creatingUserSchema,
   updatingUserSchema,
+  resetPasswordSchema,
+  verifyingEmailSchema,
+  confirmingResetPasswordSchema,
 } = require('../validators/userValidators');
 
 
@@ -129,5 +139,59 @@ router.get('/users/:id/avatar', asyncMiddleWare(async (req, res) => {
   res.set('Content-type', 'image/png');
   return res.status(200).send(user.avatar);
 }));
+
+
+// Reset password endpoint for authenticated users
+router.put('/users/me/reset_password', auth,
+    asyncMiddleWare(async (req, res) => {
+      const {error, value} = resetPasswordSchema.validate({...req.body});
+      if (error) {
+        throw boom.badRequest(error);
+      }
+      const isMatch = await bcrypt.compare(value.oldPassword,
+          req.user.password);
+      if (!isMatch) {
+        throw boom.badRequest('there is not the old password');
+      }
+      req.user.password = value.newPassword;
+      await req.user.save();
+      return res.status(202).send();
+    }));
+
+// Forget password endpoint
+router.put('/users/forget_password', limiter, asyncMiddleWare(async (req, res) => {
+  const {error, value} = verifyingEmailSchema.validate({...req.body});
+  if (error) {
+    throw boom.badRequest(error);
+  }
+  const user = await User.findOne({email: value.email});
+  if (!user) {
+    // eslint-disable-next-line max-len
+    return res.status(202).send({'message': 'the email was sent to given email please go to email to confirm'});
+  };
+  const token = PasswordChange.generateTokens();
+  await PasswordChange.create({
+    owner: user._id,
+    token: token,
+  });
+  sendResetPasswordEmail(token, user);
+  // eslint-disable-next-line max-len
+  return res.status(202).send({'message': 'the email was sent to given email please go to email to confirm'});
+}));
+
+// Forget password confirm updating endpoint
+router.put('/users/forget_password/confirm',
+    asyncMiddleWare(async (req, res) => {
+      const {error, value} =
+        confirmingResetPasswordSchema.validate({...req.body});
+      if (error) {
+        throw boom.badRequest(error);
+      }
+      const userId = await PasswordChange.findByToken(value.token);
+      await User.findByIdAndUpdate(userId,
+          {$set: {password: value.password, tokens: []}});
+      return res.status(200).send(
+          {message: 'the password is updated successfully pls login again'});
+    }));
 
 module.exports = router;

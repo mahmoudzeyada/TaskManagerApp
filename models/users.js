@@ -120,6 +120,15 @@ userSchema.pre('save', async function() {
   }
 });
 
+userSchema.pre('findOneAndUpdate', async function() {
+  // eslint-disable-next-line no-invalid-this
+  const modifiedFields = this.getUpdate().$set;
+  if (modifiedFields['password']) {
+    modifiedFields['password'] = await bcrypt
+        .hash(modifiedFields['password'], 8);
+  }
+});
+
 // Middleware for removing all related tasks
 userSchema.pre('remove', async function() {
   // eslint-disable-next-line no-invalid-this

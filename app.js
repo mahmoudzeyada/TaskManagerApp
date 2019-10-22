@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const boom = require('@hapi/boom');
 
 const tasksRouter = require('./routes/tasks');
 const usersRouter = require('./routes/users');
@@ -26,7 +27,7 @@ app.use(tasksRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  next(createError(404));
+  next(boom.notFound('missing'));
 });
 
 // error handler
