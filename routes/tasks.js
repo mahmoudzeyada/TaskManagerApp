@@ -121,7 +121,7 @@ router.post(
       throw boom.badRequest("you should provide an image ");
     }
     const { path: filePath, destination, filename } = req.file;
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findOne({ _id: req.params.id, owner: req.user.id });
     if (!task) {
       throw boom.notFound("this task not found");
     }
@@ -140,7 +140,7 @@ router.delete(
   "/tasks/:id/avatar",
   auth,
   asyncMiddleWare(async (req, res) => {
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findOne({ _id: req.params.id, owner: req.user.id });
 
     if (!task) {
       throw boom.notFound("this task not found");

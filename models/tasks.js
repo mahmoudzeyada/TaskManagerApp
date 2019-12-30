@@ -20,7 +20,7 @@ const taskSchema = new Schema(
       default: defaultImagePath
     },
     dueBy: {
-      type: Date,
+      type: String,
       required: true
     },
     completed: {
